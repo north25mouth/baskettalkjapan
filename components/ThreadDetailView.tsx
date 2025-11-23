@@ -1,5 +1,10 @@
 'use client';
 
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { getFirebaseAuth } from '@/lib/firebase/config';
+import { createPost, getPostsByThread, getUser } from '@/lib/firebase/firestore';
 import { Thread, Post, User, Match, Team } from '@/types';
 import { formatDate, getThreadTypeLabel } from '@/lib/utils';
 import Link from 'next/link';
@@ -13,13 +18,126 @@ interface ThreadDetailViewProps {
 }
 
 export default function ThreadDetailView({
-  thread,
-  posts,
-  authorMap,
+  thread: initialThread,
+  posts: initialPosts,
+  authorMap: initialAuthorMap,
   match,
   team,
 }: ThreadDetailViewProps) {
+  const router = useRouter();
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const [authorMap, setAuthorMap] = useState<Map<string, User>>(initialAuthorMap);
+  const [postContent, setPostContent] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+  const [thread, setThread] = useState<Thread>(initialThread);
+  const [displayedPostsCount, setDisplayedPostsCount] = useState(100); // 表示する投稿数
+  const [loadingMore, setLoadingMore] = useState(false);
+
   const author = authorMap.get(thread.author_id);
+
+  // 認証状態の確認
+  useEffect(() => {
+    const authInstance = getFirebaseAuth();
+    if (!authInstance) {
+      console.warn('[ThreadDetailView] Firebase auth is not initialized');
+      setLoading(false);
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(authInstance, (currentUser) => {
+      setUser(currentUser);
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // 投稿作成
+  const handleSubmitPost = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      router.push('/login');
+      return;
+    }
+
+    const content = postContent.trim();
+    if (!content) {
+      setError('投稿内容を入力してください');
+      return;
+    }
+
+    if (content.length > 10000) {
+      setError('投稿内容は10,000文字以内で入力してください');
+      return;
+    }
+
+    setError('');
+    setSubmitting(true);
+
+    try {
+      // 投稿を作成
+      await createPost({
+        thread_id: thread.id,
+        author_id: user.uid,
+        content: content,
+      });
+
+      // 投稿内容をクリア
+      setPostContent('');
+
+      // 投稿一覧を再取得
+      const updatedPosts = await getPostsByThread(thread.id);
+      
+      // 新しい投稿の作成者情報を取得
+      const newAuthorIds = new Set<string>();
+      updatedPosts.forEach(post => {
+        if (!authorMap.has(post.author_id)) {
+          newAuthorIds.add(post.author_id);
+        }
+      });
+
+      // 新しい作成者情報を取得
+      const newAuthors = await Promise.all(
+        Array.from(newAuthorIds).map(id => getUser(id))
+      );
+
+      // 作成者マップを更新
+      const updatedAuthorMap = new Map(authorMap);
+      newAuthors.forEach(author => {
+        if (author) {
+          updatedAuthorMap.set(author.id, author);
+        }
+      });
+
+      // 状態を更新
+      setPosts(updatedPosts);
+      setAuthorMap(updatedAuthorMap);
+      
+      // スレッドの投稿数を更新
+      setThread({
+        ...thread,
+        posts_count: updatedPosts.length,
+      });
+
+      // 表示件数を更新（新しい投稿が表示されるように）
+      setDisplayedPostsCount(prev => Math.max(prev, updatedPosts.length));
+      
+      // 投稿一覧の最後にスクロール（新しい投稿が下に表示されるため）
+      setTimeout(() => {
+        window.scrollTo({
+          top: document.documentElement.scrollHeight,
+          behavior: 'smooth',
+        });
+      }, 100);
+    } catch (err: any) {
+      console.error('投稿の作成に失敗しました:', err);
+      setError(err.message || '投稿の作成に失敗しました');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
@@ -130,7 +248,8 @@ export default function ThreadDetailView({
           </h2>
 
           {posts.length > 0 ? (
-            posts.map((post) => {
+            <>
+              {posts.slice(0, displayedPostsCount).map((post) => {
               const postAuthor = authorMap.get(post.author_id);
               return (
                 <div
@@ -193,7 +312,23 @@ export default function ThreadDetailView({
                   )}
                 </div>
               );
-            })
+              })}
+              
+              {/* もっと表示ボタン */}
+              {posts.length > displayedPostsCount && (
+                <div className="flex justify-center pt-4">
+                  <button
+                    onClick={() => {
+                      setDisplayedPostsCount(prev => Math.min(prev + 100, posts.length));
+                    }}
+                    disabled={loadingMore}
+                    className="rounded-lg border border-gray-300 bg-white px-6 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-600 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    {loadingMore ? '読み込み中...' : `もっと表示 (残り ${posts.length - displayedPostsCount}件)`}
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="rounded-lg border border-gray-200 bg-white p-8 text-center dark:border-gray-700 dark:bg-gray-800">
               <p className="text-gray-600 dark:text-gray-400">
@@ -203,11 +338,64 @@ export default function ThreadDetailView({
           )}
         </div>
 
-        {/* 投稿フォーム（後で実装） */}
+        {/* 投稿フォーム */}
         <div className="mt-8 rounded-lg border border-gray-200 bg-white p-6 dark:border-gray-700 dark:bg-gray-800">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            投稿フォームはフェーズ2で実装します
-          </p>
+          {loading ? (
+            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+              読み込み中...
+            </div>
+          ) : user ? (
+            <form onSubmit={handleSubmitPost}>
+              <h3 className="mb-4 text-lg font-semibold text-gray-900 dark:text-gray-100">
+                コメントを投稿
+              </h3>
+              
+              {error && (
+                <div className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-800 dark:bg-red-900/20 dark:text-red-200">
+                  {error}
+                </div>
+              )}
+
+              <div className="mb-4">
+                <textarea
+                  value={postContent}
+                  onChange={(e) => setPostContent(e.target.value)}
+                  placeholder="コメントを入力してください..."
+                  rows={6}
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 dark:placeholder-gray-400"
+                  disabled={submitting}
+                />
+                <div className="mt-1 text-right text-xs text-gray-500 dark:text-gray-400">
+                  {postContent.length} / 10,000 文字
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  投稿することで、利用規約に同意したものとみなされます
+                </p>
+                <button
+                  type="submit"
+                  disabled={submitting || !postContent.trim()}
+                  className="rounded-lg bg-orange-600 px-6 py-2 text-sm font-medium text-white hover:bg-orange-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {submitting ? '投稿中...' : '投稿'}
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="text-center">
+              <p className="mb-4 text-sm text-gray-600 dark:text-gray-400">
+                コメントを投稿するにはログインが必要です
+              </p>
+              <Link
+                href="/login"
+                className="inline-block rounded-lg bg-orange-600 px-6 py-2 text-sm font-medium text-white hover:bg-orange-700"
+              >
+                ログイン
+              </Link>
+            </div>
+          )}
         </div>
       </div>
     </div>

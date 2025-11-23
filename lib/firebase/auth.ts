@@ -20,21 +20,49 @@ export async function signUpWithEmail(
   password: string,
   displayName: string
 ): Promise<FirebaseUser> {
-  const authInstance = getFirebaseAuth();
-  const userCredential = await createUserWithEmailAndPassword(
-    authInstance,
-    email,
-    password
-  );
-  const user = userCredential.user;
+  try {
+    // クライアント側でのみ実行可能
+    if (typeof window === 'undefined') {
+      throw new Error('この関数はクライアント側でのみ実行可能です');
+    }
 
-  // プロフィール更新
-  if (user) {
-    await updateProfile(user, { displayName });
-    await sendEmailVerification(user);
+    const authInstance = getFirebaseAuth();
+    
+    if (!authInstance) {
+      console.error('[signUpWithEmail] authInstance is null');
+      throw new Error('Firebase認証が初期化されていません。環境変数を確認してください。');
+    }
+
+    console.log('[signUpWithEmail] Firebase Auth初期化成功');
+
+    const userCredential = await createUserWithEmailAndPassword(
+      authInstance,
+      email,
+      password
+    );
+    const user = userCredential.user;
+
+    // プロフィール更新
+    if (user) {
+      await updateProfile(user, { displayName });
+      await sendEmailVerification(user);
+    }
+
+    return user;
+  } catch (error: any) {
+    console.error('[signUpWithEmail] Error:', error);
+    console.error('[signUpWithEmail] Error code:', error.code);
+    console.error('[signUpWithEmail] Error message:', error.message);
+    
+    // より分かりやすいエラーメッセージに変換
+    if (error.code === 'auth/configuration-not-found' || error.message?.includes('configuration-not-found')) {
+      throw new Error(
+        'Firebase設定が見つかりません。開発サーバーを再起動してください。.env.localファイルに必要な環境変数が設定されているか確認してください。'
+      );
+    }
+    
+    throw error;
   }
-
-  return user;
 }
 
 // メール/パスワードでログイン

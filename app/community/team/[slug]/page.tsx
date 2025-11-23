@@ -6,15 +6,18 @@ import Link from 'next/link';
 import { getTeamColor } from '@/lib/utils';
 
 interface TeamPageProps {
-  params: {
+  params: Promise<{
     slug: string;
-  };
+  }>;
 }
 
 async function getThreadsWithDetails(teamId: string): Promise<ThreadWithDetails[]> {
-  // インデックスエラーを回避するため、一時的にクライアント側でフィルタリング
-  // インデックス作成後は、getThreads({ team_id: teamId }, 'created_at', 'desc', 20) を使用可能
+  // インデックスエラーを回避するため、typeでフィルタリングしてからクライアント側でフィルタリング
+  // インデックス作成後は、getThreads({ team_id: teamId, type: 'team' }, 'created_at', 'desc', 20) を使用可能
   // インデックス作成方法: docs/FIRESTORE_INDEX_SETUP.md を参照
+  // または、エラーメッセージに含まれるURLから直接作成可能
+  
+  // まず、typeでフィルタリングしてからクライアント側でフィルタリング（インデックス不要）
   const allThreads = await getThreads({ type: 'team' }, 'created_at', 'desc', 100);
   const teamThreads = allThreads.filter(thread => thread.team_id === teamId);
   
@@ -34,13 +37,16 @@ async function getThreadsWithDetails(teamId: string): Promise<ThreadWithDetails[
 }
 
 export default async function TeamPage({ params }: TeamPageProps) {
+  // Next.js 16では、paramsがPromiseとして渡される場合がある
+  const resolvedParams = await params;
+  
   // パラメータの検証
-  if (!params || !params.slug) {
-    console.error('[TeamPage] Invalid params:', params);
+  if (!resolvedParams || !resolvedParams.slug) {
+    console.error('[TeamPage] Invalid params:', resolvedParams);
     return notFound();
   }
 
-  const slug = params.slug;
+  const slug = resolvedParams.slug;
 
   if (typeof slug !== 'string' || slug.trim() === '') {
     console.error('[TeamPage] Invalid slug:', slug, typeof slug);
@@ -96,17 +102,9 @@ export default async function TeamPage({ params }: TeamPageProps) {
 
           {/* スレッド一覧 */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-                スレッド ({threads.length})
-              </h2>
-              <Link
-                href={`/community/new?team=${team.id}`}
-                className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
-              >
-                新規スレッド作成
-              </Link>
-            </div>
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+              スレッド ({threads.length})
+            </h2>
 
             {threads.length > 0 ? (
               threads.map((thread) => (
@@ -117,12 +115,6 @@ export default async function TeamPage({ params }: TeamPageProps) {
                 <p className="text-gray-600 dark:text-gray-400">
                   まだスレッドがありません。
                 </p>
-                <Link
-                  href={`/community/new?team=${team.id}`}
-                  className="mt-4 inline-block rounded-lg bg-orange-600 px-6 py-2 text-white hover:bg-orange-700"
-                >
-                  最初のスレッドを作成
-                </Link>
               </div>
             )}
           </div>

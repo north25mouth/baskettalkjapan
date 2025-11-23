@@ -275,51 +275,136 @@ export async function getThreads(
 ): Promise<Thread[]> {
   try {
     console.log('[getThreads] Starting with filters:', filters);
-    const constraints: QueryConstraint[] = [];
-
-    if (filters?.type) {
-      constraints.push(where('type', '==', filters.type));
-    }
-    if (filters?.team_id) {
-      constraints.push(where('team_id', '==', filters.team_id));
-    }
-    if (filters?.match_id) {
-      constraints.push(where('match_id', '==', filters.match_id));
-    }
-    if (filters?.author_id) {
-      constraints.push(where('author_id', '==', filters.author_id));
-    }
-
-    constraints.push(orderBy(orderByField, orderDirection));
-    if (limitCount) {
-      constraints.push(limit(limitCount));
-    }
-
     const db = getDb();
-    console.log('[getThreads] Querying threads...');
-    const threadsSnapshot = await getDocs(
-      query(collection(db, 'threads'), ...constraints)
-    );
+    
+    // インデックスエラーを回避するため、whereとorderByを分離
+    // まず、whereのみでフィルタリング
+    let threadsSnapshot;
+    
+    if (filters && Object.keys(filters).length > 0) {
+      // フィルターがある場合
+      const whereConstraints: QueryConstraint[] = [];
+      
+      if (filters.type) {
+        whereConstraints.push(where('type', '==', filters.type));
+      }
+      if (filters.team_id) {
+        whereConstraints.push(where('team_id', '==', filters.team_id));
+      }
+      if (filters.match_id) {
+        whereConstraints.push(where('match_id', '==', filters.match_id));
+      }
+      if (filters.author_id) {
+        whereConstraints.push(where('author_id', '==', filters.author_id));
+      }
+      
+      // whereのみでクエリ（インデックス不要）
+      threadsSnapshot = await getDocs(
+        query(collection(db, 'threads'), ...whereConstraints)
+      );
+    } else {
+      // フィルターがない場合、すべて取得
+      threadsSnapshot = await getDocs(collection(db, 'threads'));
+    }
 
     console.log('[getThreads] Found threads:', threadsSnapshot.size);
 
-    return threadsSnapshot.docs.map((doc) => ({
+    // メモリ上でソートとフィルタリング
+    let threads = threadsSnapshot.docs.map((doc) => ({
       ...doc.data(),
       id: doc.id,
       created_at: timestampToDate(doc.data().created_at),
       updated_at: timestampToDate(doc.data().updated_at),
     })) as Thread[];
-  } catch (error) {
-    console.error('[getThreads] Error occurred:', error);
-    console.error('[getThreads] Error details:', {
-      filters,
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
+
+    // ソート
+    threads.sort((a, b) => {
+      const aValue = (a as any)[orderByField];
+      const bValue = (b as any)[orderByField];
+      
+      if (aValue instanceof Date && bValue instanceof Date) {
+        return orderDirection === 'asc' 
+          ? aValue.getTime() - bValue.getTime()
+          : bValue.getTime() - aValue.getTime();
+      }
+      
+      if (orderDirection === 'asc') {
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      } else {
+        return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+      }
     });
-    // エラーが発生した場合は空配列を返す
-    if (error instanceof Error && error.message.includes('index')) {
-      console.warn('[getThreads] Index required. Please create the index.');
+
+    // リミット
+    if (limitCount) {
+      threads = threads.slice(0, limitCount);
     }
+
+    return threads;
+  } catch (error) {
+    // エラーオブジェクトを直接ログ出力
+    console.error('[getThreads] Error occurred:', error);
+    
+    // エラーの詳細を取得
+    let errorMessage = 'Unknown error';
+    let errorName = 'Unknown';
+    let errorCode: string | undefined;
+    let errorStack: string | undefined;
+    let requiresIndex = false;
+    
+    if (error instanceof Error) {
+      errorMessage = error.message;
+      errorName = error.name;
+      errorStack = error.stack;
+      
+      // Firebaseエラーの場合、codeプロパティを確認
+      if ('code' in error) {
+        errorCode = (error as any).code;
+      }
+      
+      // インデックスエラーのチェック
+      if (errorMessage.includes('index') || errorMessage.includes('Index')) {
+        requiresIndex = true;
+      }
+    } else if (typeof error === 'object' && error !== null) {
+      // オブジェクトの場合、プロパティを確認
+      if ('message' in error) {
+        errorMessage = String((error as any).message);
+      }
+      if ('code' in error) {
+        errorCode = String((error as any).code);
+      }
+      if ('name' in error) {
+        errorName = String((error as any).name);
+      }
+    } else {
+      errorMessage = String(error);
+    }
+    
+    const errorDetails: any = {
+      filters,
+      errorMessage,
+      errorName,
+      errorType: typeof error,
+    };
+    
+    if (errorCode) {
+      errorDetails.errorCode = errorCode;
+    }
+    
+    if (errorStack) {
+      errorDetails.errorStack = errorStack;
+    }
+    
+    console.error('[getThreads] Error details:', JSON.stringify(errorDetails, null, 2));
+    
+    // エラーが発生した場合は空配列を返す
+    if (requiresIndex) {
+      console.warn('[getThreads] Index required. Please create the index.');
+      console.warn('[getThreads] Filters used:', filters);
+      console.warn('[getThreads] Order by:', orderByField, orderDirection);
+    }
+    
     return [];
   }
 }
@@ -361,26 +446,73 @@ export async function getPost(postId: string): Promise<Post | null> {
 }
 
 export async function getPostsByThread(threadId: string): Promise<Post[]> {
-  const db = getDb();
-  const postsSnapshot = await getDocs(
-    query(
-      collection(db, 'posts'),
-      where('thread_id', '==', threadId),
-      where('deleted_flag', '==', false),
-      orderBy('created_at', 'asc')
-    )
-  );
+  try {
+    const db = getDb();
+    
+    // インデックスエラーを回避するため、whereのみでクエリを実行し、ソートはメモリ上で行う
+    const postsSnapshot = await getDocs(
+      query(
+        collection(db, 'posts'),
+        where('thread_id', '==', threadId),
+        where('deleted_flag', '==', false)
+      )
+    );
 
-  return postsSnapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      ...data,
-      id: doc.id,
-      created_at: timestampToDate(data.created_at),
-      edited_at: data.edited_at ? timestampToDate(data.edited_at) : undefined,
-      deleted_at: data.deleted_at ? timestampToDate(data.deleted_at) : undefined,
-    };
-  }) as Post[];
+    // メモリ上でソート
+    const posts = postsSnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        ...data,
+        id: doc.id,
+        created_at: timestampToDate(data.created_at),
+        edited_at: data.edited_at ? timestampToDate(data.edited_at) : undefined,
+        deleted_at: data.deleted_at ? timestampToDate(data.deleted_at) : undefined,
+      };
+    }) as Post[];
+
+    // 作成日時でソート（昇順：古いものが上、新しいものが下）
+    // ユーザーの要求に従い、古いものが下に行くようにするため、降順に変更（新しいものが上、古いものが下）
+    posts.sort((a, b) => {
+      return b.created_at.getTime() - a.created_at.getTime();
+    });
+
+    return posts;
+  } catch (error) {
+    console.error('[getPostsByThread] Error occurred:', error);
+    
+    // エラーが発生した場合は、thread_idのみでフィルタリングしてからメモリ上でフィルタリング
+    try {
+      const db = getDb();
+      const postsSnapshot = await getDocs(
+        query(
+          collection(db, 'posts'),
+          where('thread_id', '==', threadId)
+        )
+      );
+
+      const posts = postsSnapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          created_at: timestampToDate(data.created_at),
+          edited_at: data.edited_at ? timestampToDate(data.edited_at) : undefined,
+          deleted_at: data.deleted_at ? timestampToDate(data.deleted_at) : undefined,
+        };
+      }) as Post[];
+
+      // メモリ上でdeleted_flagでフィルタリングとソート
+      // 古いものが下に行くように、降順にソート（新しいものが上、古いものが下）
+      const filteredPosts = posts
+        .filter(post => !post.deleted_flag)
+        .sort((a, b) => b.created_at.getTime() - a.created_at.getTime());
+
+      return filteredPosts;
+    } catch (fallbackError) {
+      console.error('[getPostsByThread] Fallback also failed:', fallbackError);
+      return [];
+    }
+  }
 }
 
 export async function createPost(postData: Omit<Post, 'id' | 'created_at' | 'likes_count' | 'deleted_flag'>): Promise<string> {

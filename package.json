@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "seed:teams": "node scripts/seed-teams-client.js",
+    "seed:team-threads": "node scripts/seed-team-threads.js",
     "update:team-slugs": "node scripts/update-team-slugs.js",
+    "update:thread-authors": "node scripts/update-thread-authors.js",
     "check:firebase": "node scripts/check-firebase-config.js",
     "backup": "bash scripts/backup.sh",
     "backup:firestore": "node scripts/backup-firestore.js"

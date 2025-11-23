@@ -4,13 +4,15 @@ import { Thread, Post, User, Match, Team } from '@/types';
 import ThreadDetailView from '@/components/ThreadDetailView';
 
 interface ThreadDetailPageProps {
-  params: {
+  params: Promise<{
     id: string;
-  };
+  }>;
 }
 
 export default async function ThreadDetailPage({ params }: ThreadDetailPageProps) {
-  const threadId = params.id;
+  // Next.js 16では、paramsがPromiseとして渡される場合がある
+  const resolvedParams = await params;
+  const threadId = resolvedParams.id;
 
   try {
     // スレッドと投稿を並列取得
