@@ -8,6 +8,7 @@
 2. **[Gitブランチルール](./02-git-branch-rules.md)** - GitHubブランチの命名規則と運用ルール
 3. **[コーディング規約](./03-coding-standards.md)** - コードの書き方とスタイルガイド
 4. **[コミットメッセージルール](./04-commit-message-rules.md)** - コミットメッセージの書き方
+5. **[WordPress記事連携完全ガイド](./05-wordpress-integration-guide.md)** - WordPressでの記事管理とNext.js連携の詳細ガイド ⭐ **重要**
 
 ## 重要事項
 
