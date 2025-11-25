@@ -40,13 +40,16 @@ export default function SignupPage() {
     try {
       const firebaseUser = await signUpWithEmail(email, password, displayName);
       
-      // Firestoreにユーザー情報を保存
-      await createUser({
-        display_name: displayName,
-        email: email,
-        bio: '',
-        roles: ['user'],
-      });
+      // Firestoreにユーザー情報を保存（Firebase AuthのUIDをドキュメントIDとして使用）
+      await createUser(
+        {
+          display_name: displayName,
+          email: email,
+          bio: '',
+          roles: ['user'],
+        },
+        firebaseUser.uid // Firebase AuthのUIDを使用
+      );
 
       router.push('/community');
     } catch (err: any) {

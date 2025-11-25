@@ -100,7 +100,7 @@ export default function Header() {
                 >
                   マイページ
                 </Link>
-                {user.email && ['admin@example.com'].includes(user.email) && (
+                {user.email && ['admin081805@admin.com', 'admin@example.com'].includes(user.email) && (
                   <Link
                     href="/admin"
                     className="text-sm font-medium text-gray-700 hover:text-orange-600 dark:text-gray-300 dark:hover:text-orange-400"

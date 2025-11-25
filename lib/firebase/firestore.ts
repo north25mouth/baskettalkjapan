@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   addDoc,
+  setDoc,
   updateDoc,
   deleteDoc,
   query,
@@ -97,8 +98,30 @@ export async function getUser(userId: string): Promise<User | null> {
   }
 }
 
-export async function createUser(userData: Omit<User, 'id' | 'created_at'>): Promise<string> {
+export async function createUser(
+  userData: Omit<User, 'id' | 'created_at'>,
+  userId?: string
+): Promise<string> {
   const db = getDb();
+  
+  // userIdが指定されている場合は、そのIDを使用（Firebase AuthのUIDと一致させる）
+  if (userId) {
+    const userRef = doc(db, 'users', userId);
+    // setDocを使用して、存在しない場合は作成、存在する場合は上書きしない（merge: false）
+    // ただし、既に存在する場合は更新しないようにする
+    const userDoc = await getDoc(userRef);
+    if (!userDoc.exists()) {
+      // 存在しない場合は作成
+      await setDoc(userRef, {
+        ...userData,
+        created_at: dateToTimestamp(new Date()),
+      });
+    }
+    // 既に存在する場合は何もしない（既存のデータを保持）
+    return userId;
+  }
+  
+  // userIdが指定されていない場合は、自動生成
   const docRef = await addDoc(collection(db, 'users'), {
     ...userData,
     created_at: dateToTimestamp(new Date()),
@@ -110,10 +133,93 @@ export async function updateUser(userId: string, updates: Partial<User>): Promis
   const db = getDb();
   const userRef = doc(db, 'users', userId);
   const updateData: any = { ...updates };
+  
+  // updated_atを自動設定（指定されていない場合）
   if (updates.updated_at) {
     updateData.updated_at = dateToTimestamp(updates.updated_at);
+  } else {
+    updateData.updated_at = dateToTimestamp(new Date());
   }
+  
   await updateDoc(userRef, updateData);
+}
+
+// お気に入りチーム関連
+export async function addFavoriteTeam(userId: string, teamId: string): Promise<void> {
+  const db = getDb();
+  const userRef = doc(db, 'users', userId);
+  const userDoc = await getDoc(userRef);
+  
+  if (!userDoc.exists()) {
+    throw new Error('User not found');
+  }
+  
+  const userData = userDoc.data();
+  const favoriteTeams = userData.favorite_teams || [];
+  
+  // 既に登録されている場合は何もしない
+  if (favoriteTeams.includes(teamId)) {
+    return;
+  }
+  
+  // 最大3つまで
+  if (favoriteTeams.length >= 3) {
+    throw new Error('お気に入りチームは最大3つまで登録できます');
+  }
+  
+  await updateDoc(userRef, {
+    favorite_teams: [...favoriteTeams, teamId],
+    updated_at: dateToTimestamp(new Date()),
+  });
+}
+
+export async function removeFavoriteTeam(userId: string, teamId: string): Promise<void> {
+  const db = getDb();
+  const userRef = doc(db, 'users', userId);
+  const userDoc = await getDoc(userRef);
+  
+  if (!userDoc.exists()) {
+    throw new Error('User not found');
+  }
+  
+  const userData = userDoc.data();
+  const favoriteTeams = userData.favorite_teams || [];
+  
+  await updateDoc(userRef, {
+    favorite_teams: favoriteTeams.filter((id: string) => id !== teamId),
+    updated_at: dateToTimestamp(new Date()),
+  });
+}
+
+export async function getFavoriteTeams(userId: string): Promise<Team[]> {
+  const db = getDb();
+  const userDoc = await getDoc(doc(db, 'users', userId));
+  
+  if (!userDoc.exists()) {
+    return [];
+  }
+  
+  const userData = userDoc.data();
+  const favoriteTeamIds = userData.favorite_teams || [];
+  
+  if (favoriteTeamIds.length === 0) {
+    return [];
+  }
+  
+  // 各チームIDを取得
+  const teams: Team[] = [];
+  for (const teamId of favoriteTeamIds) {
+    try {
+      const team = await getTeam(teamId);
+      if (team) {
+        teams.push(team);
+      }
+    } catch (error) {
+      console.error(`[getFavoriteTeams] Error fetching team ${teamId}:`, error);
+    }
+  }
+  
+  return teams;
 }
 
 // Team関連
@@ -191,6 +297,34 @@ export async function getTeams(): Promise<Team[]> {
   })) as Team[];
 }
 
+export async function getTeamByAbbreviation(abbreviation: string): Promise<Team | null> {
+  try {
+    const db = getDb();
+    const teamsSnapshot = await getDocs(
+      query(
+        collection(db, 'teams'),
+        where('abbreviation', '==', abbreviation),
+        limit(1)
+      )
+    );
+
+    if (teamsSnapshot.empty) {
+      return null;
+    }
+
+    const teamDoc = teamsSnapshot.docs[0];
+    const data = teamDoc.data();
+    return {
+      ...data,
+      id: teamDoc.id,
+      created_at: timestampToDate(data.created_at),
+    } as Team;
+  } catch (error) {
+    console.error('[getTeamByAbbreviation] Error occurred:', error);
+    return null;
+  }
+}
+
 // Match関連
 export async function getMatch(matchId: string): Promise<Match | null> {
   const db = getDb();
@@ -203,49 +337,6 @@ export async function getMatch(matchId: string): Promise<Match | null> {
     start_time: timestampToDate(data.start_time),
     created_at: timestampToDate(data.created_at),
   } as Match;
-}
-
-export async function getTodayMatches(): Promise<Match[]> {
-  try {
-    console.log('[getTodayMatches] Starting...');
-    const db = getDb();
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-
-    console.log('[getTodayMatches] Querying matches for today:', today.toISOString());
-
-    const matchesSnapshot = await getDocs(
-      query(
-        collection(db, 'matches'),
-        where('start_time', '>=', dateToTimestamp(today)),
-        where('start_time', '<', dateToTimestamp(tomorrow)),
-        orderBy('start_time')
-      )
-    );
-
-    console.log('[getTodayMatches] Found matches:', matchesSnapshot.size);
-
-    return matchesSnapshot.docs.map((doc) => ({
-      ...doc.data(),
-      id: doc.id,
-      start_time: timestampToDate(doc.data().start_time),
-      created_at: timestampToDate(doc.data().created_at),
-    })) as Match[];
-  } catch (error) {
-    console.error('[getTodayMatches] Error occurred:', error);
-    console.error('[getTodayMatches] Error details:', {
-      errorMessage: error instanceof Error ? error.message : String(error),
-      errorStack: error instanceof Error ? error.stack : undefined,
-    });
-    // エラーが発生した場合は空配列を返す（ページが表示されるように）
-    // インデックスエラーの場合は、エラーメッセージにリンクが含まれている
-    if (error instanceof Error && error.message.includes('index')) {
-      console.warn('[getTodayMatches] Index required. Please create the index.');
-    }
-    return [];
-  }
 }
 
 // Thread関連

@@ -5,10 +5,10 @@
 ## ドキュメント一覧
 
 ### [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)
-一般的なエラーとその解決方法をまとめたガイドです。
+一般的なエラーとその解決方法をまとめたガイドです（500エラーのデバッグ手順を含む）。
 
 **内容:**
-- 500 Internal Server Error
+- 500 Internal Server Error（原因の特定方法、デバッグ手順を含む）
 - 404 Not Found エラー
 - 認証エラー
 - パフォーマンスの問題
@@ -24,14 +24,11 @@
 - エラーログのベストプラクティス
 - リトライ機能
 
-### [500_ERROR_DEBUG.md](./500_ERROR_DEBUG.md)
-500エラーの詳細なデバッグガイドです。
+### [AUTH_CONFIGURATION_ERROR.md](./AUTH_CONFIGURATION_ERROR.md)
+認証設定エラーの解決方法です。
 
-### [DEBUG_STEPS.md](./DEBUG_STEPS.md)
-デバッグ手順をまとめたガイドです。
-
-### [500_ERROR_FINAL.md](./500_ERROR_FINAL.md) ⚠️ アーカイブ
-500エラーの最終確認事項（解決済み - 参考用）
+### [AUTH_400_ERROR.md](./AUTH_400_ERROR.md)
+認証400エラーの解決方法です。
 
 ## 関連ドキュメント
 

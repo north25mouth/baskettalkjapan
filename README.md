@@ -23,7 +23,7 @@ BasketTalk Japanは、日本のNBAファンが集まり、試合について語�
 
 - **フロントエンド**: Next.js 16 (App Router), React 19, TypeScript, Tailwind CSS v4
 - **バックエンド**: Firebase (Auth, Firestore, Cloud Functions)
-- **デプロイ**: Vercel (予定)
+- **デプロイ**: Vercel または 有料サーバー（Node.js対応）
 
 ## セットアップ
 
@@ -32,24 +32,65 @@ BasketTalk Japanは、日本のNBAファンが集まり、試合について語�
 - Node.js 18以上
 - npm または yarn
 - Firebase プロジェクト
+- Git
 
 ### インストール
 
+#### 1. リポジトリのクローン
+
 ```bash
-# 依存関係のインストール
+git clone https://github.com/north25mouth/baskettalkjapan.git
+cd baskettalkjapan
+```
+
+#### 2. 依存関係のインストール
+
+```bash
 npm install
+```
 
-# 環境変数の設定
+#### 3. 環境変数の設定
+
+```bash
+# .env.exampleをコピーして.env.localを作成
 cp .env.example .env.local
-# .env.localを編集してFirebase設定を追加
+```
 
-# 開発サーバーの起動
+`.env.local` ファイルを編集して、Firebase設定を追加してください。
+
+```env
+NEXT_PUBLIC_FIREBASE_API_KEY=あなたのAPIキー
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=あなたのプロジェクト.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=あなたのプロジェクトID
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=あなたのプロジェクト.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=あなたのSender ID
+NEXT_PUBLIC_FIREBASE_APP_ID=あなたのApp ID
+```
+
+#### 4. 開発サーバーの起動
+
+```bash
 npm run dev
 ```
+
+ブラウザで [http://localhost:3000](http://localhost:3000) を開いてください。
+
+### Windows初学者向けガイド
+
+Windows環境でのセットアップが初めての方は、[開発環境セットアップガイド](./rule/01-development-environment.md) を参照してください。
 
 詳細は [クイックスタートガイド](./docs/QUICK_START.md) を参照してください。
 
 ## ドキュメント
+
+### 開発ルール（必読）
+
+- [開発環境セットアップガイド](./rule/01-development-environment.md) - Windows初学者向け
+- [Gitブランチルール](./rule/02-git-branch-rules.md) - ブランチの命名規則と運用
+- [コーディング規約](./rule/03-coding-standards.md) - コードの書き方
+- [コミットメッセージルール](./rule/04-commit-message-rules.md) - コミットメッセージの書き方
+
+### その他のドキュメント
 
 - [ドキュメント一覧](./docs/README.md)
 - [セットアップチェックリスト](./docs/SETUP_CHECKLIST.md)

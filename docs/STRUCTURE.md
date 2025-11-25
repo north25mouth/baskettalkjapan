@@ -15,10 +15,7 @@ docs/
 ├── FIRESTORE_INDEX_SETUP.md    # Firestore インデックス設定
 ├── COLLECTION_CREATION.md       # コレクション作成方法
 │
-├── BILLING_SETUP.md             # 課金設定ガイド
-├── BILLING_SAFETY.md            # 課金に関する安全対策
-├── BILLING_CHANGES.md           # 課金ポリシーの変更について
-├── BUDGET_SETUP_GUIDE.md        # 予算アラート設定ガイド
+├── BILLING.md                   # 課金・予算管理ガイド（統合版）
 │
 ├── DEV_SECURITY_RULES.md        # 開発用セキュリティルール
 ├── MANUAL_SEED_TEAMS.md         # チームデータの手動シード方法
@@ -26,18 +23,19 @@ docs/
 ├── requirements/                # 要件定義書
 │   ├── README.md
 │   ├── 01-thread-detail-page.md
+│   ├── 06-user-profile-page.md
 │   ├── API_GUIDE.md
 │   └── completed/               # 完了した要件定義書
+│       └── 07-nba-api-integration.md
 │
 └── troubleshooting/             # トラブルシューティング
     ├── README.md
-    ├── TROUBLESHOOTING.md       # 一般的なエラーと解決方法
+    ├── TROUBLESHOOTING.md       # 一般的なエラーと解決方法（500エラー含む）
     ├── ERROR_HANDLING.md        # エラーハンドリングのベストプラクティス
-    ├── 500_ERROR_DEBUG.md       # 500エラーのデバッグガイド
-    ├── DEBUG_STEPS.md           # デバッグ手順
+    ├── AUTH_CONFIGURATION_ERROR.md  # 認証設定エラー
+    ├── AUTH_400_ERROR.md        # 認証400エラー
     └── archive/                 # 解決済みの問題（参考用）
-        ├── README.md
-        └── 500_ERROR_FINAL.md
+        └── README.md
 ```
 
 ## カテゴリ別分類
@@ -52,22 +50,21 @@ docs/
 - `COLLECTION_CREATION.md` - コレクションの作成について
 
 ### 💰 課金・予算管理
-- `BILLING_SETUP.md` - Firebase課金の設定方法
-- `BILLING_SAFETY.md` - 予期しない課金を防ぐ方法
-- `BILLING_CHANGES.md` - 課金ポリシーの変更履歴
-- `BUDGET_SETUP_GUIDE.md` - 予算アラートの設定方法
+- `BILLING.md` - Firebase課金の設定、予算管理、安全対策（統合版）
 
 ### 📋 要件定義
 - `requirements/` - 各ページの要件定義
   - `01-thread-detail-page.md` - スレッド詳細ページ
+  - `06-user-profile-page.md` - ユーザープロフィールページ
   - `API_GUIDE.md` - APIデータ取得の手順
   - `completed/` - 完了した要件定義書
+    - `07-nba-api-integration.md` - NBA API統合（現在は使用していない）
 
 ### 🐛 トラブルシューティング
-- `troubleshooting/TROUBLESHOOTING.md` - 一般的なエラーと解決方法
+- `troubleshooting/TROUBLESHOOTING.md` - 一般的なエラーと解決方法（500エラー含む）
 - `troubleshooting/ERROR_HANDLING.md` - エラーハンドリングのベストプラクティス
-- `troubleshooting/500_ERROR_DEBUG.md` - 500エラーの詳細なデバッグ手順
-- `troubleshooting/DEBUG_STEPS.md` - デバッグ手順
+- `troubleshooting/AUTH_CONFIGURATION_ERROR.md` - 認証設定エラー
+- `troubleshooting/AUTH_400_ERROR.md` - 認証400エラー
 - `troubleshooting/archive/` - 解決済みの問題（参考用）
 
 ### 🛠️ 開発ツール

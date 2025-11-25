@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
-import { auth } from '@/lib/firebase/config';
+import { getFirebaseAuth } from '@/lib/firebase/config';
 import { getReports, updateReport, deletePost } from '@/lib/firebase/firestore';
 import { Report } from '@/types';
 import { formatDate } from '@/lib/utils';
@@ -16,20 +16,21 @@ export default function AdminPage() {
   const [filter, setFilter] = useState<'pending' | 'all'>('pending');
 
   useEffect(() => {
-    if (!auth) {
+    const authInstance = getFirebaseAuth();
+    if (!authInstance) {
       console.warn('[AdminPage] Firebase auth is not initialized');
       router.push('/login');
       return;
     }
-    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+    const unsubscribe = onAuthStateChanged(authInstance, async (currentUser) => {
       if (!currentUser) {
         router.push('/login');
         return;
       }
 
-      // 管理者チェック（簡易版）
-      // 実際の実装では、Firestoreのユーザー情報からrolesを確認する
-      if (!currentUser.email?.includes('admin')) {
+      // 管理者チェック（admin081805@admin.com または adminを含むメールアドレス）
+      const adminEmails = ['admin081805@admin.com', 'admin@example.com'];
+      if (!currentUser.email || !adminEmails.includes(currentUser.email)) {
         router.push('/');
         return;
       }

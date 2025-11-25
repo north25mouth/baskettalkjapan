@@ -2,6 +2,59 @@
 
 ## 500 Internal Server Error
 
+### 症状
+
+- ブラウザのコンソールに「Failed to load resource: the server responded with a status of 500 (Internal Server Error)」のみ表示
+- 詳細なエラーメッセージが表示されない
+
+### 原因の特定方法
+
+#### 1. 開発サーバーのコンソールを確認
+
+開発サーバーを起動しているターミナルで、以下のようなログを確認してください：
+
+```
+[TeamPage] Fetching team with slug: golden-state-warriors
+[getTeamBySlug] Starting with slug: golden-state-warriors
+[getTeamBySlug] Database initialized
+[getTeamBySlug] Query completed, found: 1 teams
+```
+
+エラーが発生している場合は、以下のようなログが表示されます：
+
+```
+[TeamPage] Error occurred: ...
+[getTeamBySlug] Error occurred: ...
+```
+
+#### 2. エラーページを確認
+
+ブラウザでエラーページが表示されている場合、エラーメッセージとスタックトレースが表示されます。
+
+#### 3. Firebase設定の確認
+
+以下のコマンドでFirebase設定を確認：
+
+```bash
+npm run check:firebase
+```
+
+#### 4. 環境変数の確認
+
+`.env.local`ファイルが存在し、すべての環境変数が設定されているか確認：
+
+```bash
+cat .env.local
+```
+
+必要な環境変数：
+- `NEXT_PUBLIC_FIREBASE_API_KEY`
+- `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
+- `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
+- `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
+- `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
+- `NEXT_PUBLIC_FIREBASE_APP_ID`
+
 ### よくある原因と解決方法
 
 #### 1. Firebase初期化エラー
@@ -16,20 +69,34 @@
    cat .env.local
    ```
 2. すべての環境変数が正しく設定されているか確認
-   - `NEXT_PUBLIC_FIREBASE_API_KEY`
-   - `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-   - `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-   - `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-   - `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-   - `NEXT_PUBLIC_FIREBASE_APP_ID`
-
 3. 開発サーバーを再起動
    ```bash
    # 開発サーバーを停止（Ctrl+C）
+   rm -rf .next
    npm run dev
    ```
 
-#### 2. Firestoreクエリエラー
+#### 2. Next.js 16での`params`の扱い
+
+Next.js 16では、`params`がPromiseとして渡される場合があります。
+
+**解決方法:**
+```typescript
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params;
+  // ...
+}
+```
+
+または、現在の実装のように直接アクセス：
+```typescript
+export default async function Page({ params }: { params: { slug: string } }) {
+  const slug = params.slug;
+  // ...
+}
+```
+
+#### 3. Firestoreクエリエラー
 
 **症状:**
 - 500エラーが発生
@@ -40,18 +107,15 @@
 2. Firebase Consoleでインデックスを作成
 3. 詳細は `docs/FIRESTORE_INDEX_SETUP.md` を参照
 
-#### 3. データ型の不一致
+#### 4. データ型の不一致
 
-**症状:**
-- 500エラーが発生
-- コンソールに「Cannot read properties of undefined」エラー
+Firestoreから取得したデータの型が期待と異なる可能性があります。
 
-**解決方法:**
-1. データモデルを確認（`types/index.ts`）
-2. Firestoreのデータ構造を確認
-3. 型変換関数（`timestampToDate`など）が正しく動作しているか確認
+**確認方法:**
+- Firestore Consoleでデータ構造を確認
+- `types/index.ts`の型定義を確認
 
-#### 4. パラメータの取得エラー
+#### 5. パラメータの取得エラー
 
 **症状:**
 - 500エラーが発生
@@ -75,7 +139,7 @@
    }
    ```
 
-#### 5. サーバーコンポーネントでのクライアントAPI使用
+#### 6. サーバーコンポーネントでのクライアントAPI使用
 
 **症状:**
 - 500エラーが発生

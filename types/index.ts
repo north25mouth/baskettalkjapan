@@ -8,6 +8,7 @@ export interface User {
   bio?: string;
   avatar_url?: string;
   roles: string[]; // 'user', 'admin', 'moderator' など
+  favorite_teams?: string[]; // お気に入りチームIDの配列（最大3つ）
   created_at: Date;
   updated_at?: Date;
 }

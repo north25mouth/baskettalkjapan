@@ -13,7 +13,9 @@
     "update:thread-authors": "node scripts/update-thread-authors.js",
     "check:firebase": "node scripts/check-firebase-config.js",
     "backup": "bash scripts/backup.sh",
-    "backup:firestore": "node scripts/backup-firestore.js"
+    "backup:firestore": "node scripts/backup-firestore.js",
+    "sync:nba-games": "node scripts/sync-nba-games.js",
+    "debug:matches": "node scripts/debug-matches.js"
   },
   "dependencies": {
     "dotenv": "^17.2.3",

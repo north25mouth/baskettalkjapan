@@ -8,11 +8,10 @@
 requirements/
 ├── README.md (このファイル)
 ├── 01-thread-detail-page.md (優先順位1: スレッド詳細ページ)
-├── 02-team-board-page.md (優先順位2: チーム別掲示板)
-├── 03-post-reply-feature.md (優先順位3: 投稿・返信機能)
-├── 04-like-feature.md (優先順位4: いいね機能)
-├── 05-report-feature.md (優先順位5: 通報機能)
+├── 06-user-profile-page.md (優先順位6: ユーザープロフィールページ)
+├── API_GUIDE.md (APIデータ取得の手順)
 └── completed/ (完了した要件定義書を移動)
+    └── 07-nba-api-integration.md (NBA API統合 - 現在は使用していない)
 ```
 
 ## 作業フロー
@@ -22,13 +21,12 @@ requirements/
 3. テスト・動作確認
 4. 完了した要件定義書を `completed/` フォルダに移動
 
-## 優先順位
+## 優先順位とステータス
 
-1. ✅ スレッド詳細ページ (`01-thread-detail-page.md`)
-2. ⏳ チーム別掲示板 (`02-team-board-page.md`)
-3. ⏳ 投稿・返信機能 (`03-post-reply-feature.md`)
-4. ⏳ いいね機能 (`04-like-feature.md`)
-5. ⏳ 通報機能 (`05-report-feature.md`)
+1. ✅ スレッド詳細ページ (`01-thread-detail-page.md`) - 完了
+2. ✅ ユーザープロフィールページ (`06-user-profile-page.md`) - 完了
+3. ✅ API ガイド (`API_GUIDE.md`) - 完了
+4. ❌ NBA API統合 (`07-nba-api-integration.md`) - 完了（現在は使用していない、バックアップあり）
 
 ## ステータス
 

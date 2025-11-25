@@ -12,20 +12,15 @@
 - [コレクション作成方法](./COLLECTION_CREATION.md) - コレクションの作成について
 
 ### 💰 課金・予算管理
-- [課金設定ガイド](./BILLING_SETUP.md) - Firebase課金の設定方法
-- [課金に関する安全対策](./BILLING_SAFETY.md) - 予期しない課金を防ぐ方法
-- [課金ポリシーの変更について](./BILLING_CHANGES.md) - 課金ポリシーの変更履歴
-- [予算アラート設定ガイド](./BUDGET_SETUP_GUIDE.md) - 予算アラートの設定方法
+- [課金・予算管理ガイド](./BILLING.md) - Firebase課金の設定、予算管理、安全対策（統合版）
 
 ### 📋 要件定義
 - [要件定義書一覧](./requirements/README.md) - 各ページの要件定義
 - [API ガイド](./requirements/API_GUIDE.md) - APIデータ取得の手順
 
 ### 🐛 トラブルシューティング
-- [トラブルシューティングガイド](./troubleshooting/TROUBLESHOOTING.md) - 一般的なエラーと解決方法
+- [トラブルシューティングガイド](./troubleshooting/TROUBLESHOOTING.md) - 一般的なエラーと解決方法（500エラー含む）
 - [エラーハンドリング](./troubleshooting/ERROR_HANDLING.md) - エラーハンドリングのベストプラクティス
-- [500エラーのデバッグ](./troubleshooting/500_ERROR_DEBUG.md) - 500エラーの詳細なデバッグ手順
-- [デバッグ手順](./troubleshooting/DEBUG_STEPS.md) - デバッグ手順
 
 ### 🛠️ 開発ツール
 - [開発用セキュリティルール](./DEV_SECURITY_RULES.md) - 開発環境での一時的なセキュリティルール
@@ -51,7 +46,7 @@
 1. [クイックスタートガイド](./QUICK_START.md)
 2. [セットアップチェックリスト](./SETUP_CHECKLIST.md)
 3. [Firestore Database セットアップ](./FIRESTORE_SETUP.md)
-4. [課金設定ガイド](./BILLING_SETUP.md)
+4. [課金・予算管理ガイド](./BILLING.md)
 
 ### エラーが発生した場合
 1. [トラブルシューティングガイド](./troubleshooting/TROUBLESHOOTING.md)

@@ -44,9 +44,18 @@ export default async function ThreadDetailPage({ params }: ThreadDetailPageProps
     // 試合情報またはチーム情報を取得
     let match: Match | null = null;
     let team: Team | null = null;
+    let homeTeam: Team | null = null;
+    let awayTeam: Team | null = null;
 
     if (thread.type === 'match' && thread.match_id) {
       match = await getMatch(thread.match_id);
+      // 試合情報がある場合、ホームチームとアウェイチームの情報を取得
+      if (match) {
+        [homeTeam, awayTeam] = await Promise.all([
+          getTeam(match.team_home_id),
+          getTeam(match.team_away_id),
+        ]);
+      }
     } else if (thread.type === 'team' && thread.team_id) {
       team = await getTeam(thread.team_id);
     }
@@ -58,6 +67,8 @@ export default async function ThreadDetailPage({ params }: ThreadDetailPageProps
         authorMap={authorMap}
         match={match}
         team={team}
+        homeTeam={homeTeam}
+        awayTeam={awayTeam}
       />
     );
   } catch (error) {
