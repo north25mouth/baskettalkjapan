@@ -32,6 +32,22 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# secrets and keys
+*secret*
+*key*.json
+*credentials*
+*.pem
+*.key
+*.crt
+*.cert
+service-account*.json
+firebase-adminsdk*.json
 
 # vercel
 .vercel
