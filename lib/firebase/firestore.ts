@@ -517,8 +517,31 @@ export async function updateThread(threadId: string, updates: Partial<Thread>): 
   const updateData: any = { ...updates };
   if (updates.updated_at) {
     updateData.updated_at = dateToTimestamp(updates.updated_at);
+  } else {
+    updateData.updated_at = dateToTimestamp(new Date());
   }
   await updateDoc(threadRef, updateData);
+}
+
+export async function deleteThread(threadId: string): Promise<void> {
+  const db = getDb();
+  const threadRef = doc(db, 'threads', threadId);
+  
+  // スレッドに関連する投稿も削除（削除フラグを立てる）
+  const postsSnapshot = await getDocs(
+    query(collection(db, 'posts'), where('thread_id', '==', threadId))
+  );
+  
+  // 投稿を削除（削除フラグを立てる）
+  for (const postDoc of postsSnapshot.docs) {
+    await updateDoc(doc(db, 'posts', postDoc.id), {
+      deleted_flag: true,
+      deleted_at: dateToTimestamp(new Date()),
+    });
+  }
+  
+  // スレッドを削除
+  await deleteDoc(threadRef);
 }
 
 // Post関連
@@ -734,29 +757,44 @@ export async function getReports(
   status?: Report['status'],
   limitCount?: number
 ): Promise<Report[]> {
-  const constraints: QueryConstraint[] = [];
-  if (status) {
-    constraints.push(where('status', '==', status));
+  try {
+    const db = getDb();
+    
+    // インデックスエラーを回避するため、whereのみでクエリを実行し、ソートはメモリ上で行う
+    let reportsQuery: Query = collection(db, 'reports');
+    
+    if (status) {
+      reportsQuery = query(reportsQuery, where('status', '==', status));
+    }
+    
+    const reportsSnapshot = await getDocs(reportsQuery);
+    
+    // メモリ上でソート
+    let reports = reportsSnapshot.docs
+      .map((doc) => {
+        const data = doc.data();
+        return {
+          ...data,
+          id: doc.id,
+          created_at: timestampToDate(data.created_at),
+          reviewed_at: data.reviewed_at ? timestampToDate(data.reviewed_at) : undefined,
+        };
+      })
+      .sort((a, b) => {
+        // created_atで降順ソート
+        return b.created_at.getTime() - a.created_at.getTime();
+      }) as Report[];
+    
+    // 制限を適用
+    if (limitCount) {
+      reports = reports.slice(0, limitCount);
+    }
+    
+    return reports;
+  } catch (error) {
+    console.error('[getReports] Error occurred:', error);
+    return [];
   }
-  constraints.push(orderBy('created_at', 'desc'));
-  if (limitCount) {
-    constraints.push(limit(limitCount));
-  }
-
-  const db = getDb();
-  const reportsSnapshot = await getDocs(
-    query(collection(db, 'reports'), ...constraints)
-  );
-
-  return reportsSnapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      ...data,
-      id: doc.id,
-      created_at: timestampToDate(data.created_at),
-      reviewed_at: data.reviewed_at ? timestampToDate(data.reviewed_at) : undefined,
-    };
-  }) as Report[];
 }
 
 export async function updateReport(reportId: string, updates: Partial<Report>): Promise<void> {

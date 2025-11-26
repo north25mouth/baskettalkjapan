@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { getFirebaseAuth } from '@/lib/firebase/config';
-import { createPost, getPostsByThread, getUser, toggleLike, isLiked, createReport } from '@/lib/firebase/firestore';
+import { createPost, getPostsByThread, getUser, toggleLike, isLiked, createReport, updateThread, deleteThread, updatePost, deletePost } from '@/lib/firebase/firestore';
 import { Thread, Post, User, Match, Team } from '@/types';
 import { formatDate, getThreadTypeLabel, getTeamColor } from '@/lib/utils';
 import Link from 'next/link';
@@ -45,8 +45,16 @@ export default function ThreadDetailView({
   const [showReportForm, setShowReportForm] = useState<string | null>(null); // 通報フォームを表示する投稿ID
   const [reportReason, setReportReason] = useState(''); // 通報理由
   const [reportDetails, setReportDetails] = useState(''); // 通報詳細
+  const [editingThread, setEditingThread] = useState(false); // スレッド編集モード
+  const [threadTitle, setThreadTitle] = useState(thread.title); // スレッドタイトル（編集用）
+  const [threadTags, setThreadTags] = useState(thread.tags.join(', ')); // スレッドタグ（編集用）
+  const [editingPostId, setEditingPostId] = useState<string | null>(null); // 編集中の投稿ID
+  const [editingPostContent, setEditingPostContent] = useState(''); // 編集中の投稿内容
+  const [deletingThread, setDeletingThread] = useState(false); // スレッド削除中
+  const [deletingPostId, setDeletingPostId] = useState<string | null>(null); // 削除中の投稿ID
 
   const author = authorMap.get(thread.author_id);
+  const isThreadAuthor = user && user.uid === thread.author_id;
 
   // 認証状態の確認といいね状態の取得
   useEffect(() => {
@@ -235,7 +243,7 @@ export default function ThreadDetailView({
                     固定
                   </span>
                 )}
-                {thread.tags.map((tag) => (
+                {!editingThread && thread.tags.map((tag) => (
                   <span
                     key={tag}
                     className="rounded bg-gray-100 px-2 py-0.5 text-xs text-gray-600 dark:bg-gray-700 dark:text-gray-300"
@@ -245,23 +253,127 @@ export default function ThreadDetailView({
                 ))}
               </div>
 
-              <h1 className="mb-2 text-2xl font-bold text-gray-900 dark:text-gray-100">
-                {thread.title}
-              </h1>
+              {editingThread ? (
+                <div className="mb-4 space-y-3">
+                  <input
+                    type="text"
+                    value={threadTitle}
+                    onChange={(e) => setThreadTitle(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-2xl font-bold focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    placeholder="スレッドタイトル"
+                  />
+                  <input
+                    type="text"
+                    value={threadTags}
+                    onChange={(e) => setThreadTags(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                    placeholder="タグ（カンマ区切り）"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={async () => {
+                        try {
+                          const tagArray = threadTags
+                            .split(',')
+                            .map((tag) => tag.trim())
+                            .filter((tag) => tag.length > 0);
+                          
+                          await updateThread(thread.id, {
+                            title: threadTitle.trim(),
+                            tags: tagArray,
+                          });
+                          
+                          setThread({
+                            ...thread,
+                            title: threadTitle.trim(),
+                            tags: tagArray,
+                            updated_at: new Date(),
+                          });
+                          setEditingThread(false);
+                        } catch (error) {
+                          console.error('スレッドの更新に失敗しました:', error);
+                          alert('スレッドの更新に失敗しました');
+                        }
+                      }}
+                      className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
+                    >
+                      保存
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingThread(false);
+                        setThreadTitle(thread.title);
+                        setThreadTags(thread.tags.join(', '));
+                      }}
+                      className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                    >
+                      キャンセル
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="mb-2 flex items-start justify-between">
+                    <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                      {thread.title}
+                    </h1>
+                    {isThreadAuthor && (
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => {
+                            setEditingThread(true);
+                            setThreadTitle(thread.title);
+                            setThreadTags(thread.tags.join(', '));
+                          }}
+                          className="rounded px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
+                        >
+                          編集
+                        </button>
+                        <button
+                          onClick={async () => {
+                            if (!confirm('このスレッドを削除しますか？この操作は取り消せません。')) {
+                              return;
+                            }
+                            setDeletingThread(true);
+                            try {
+                              await deleteThread(thread.id);
+                              router.push('/community');
+                            } catch (error) {
+                              console.error('スレッドの削除に失敗しました:', error);
+                              alert('スレッドの削除に失敗しました');
+                              setDeletingThread(false);
+                            }
+                          }}
+                          disabled={deletingThread}
+                          className="rounded px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 disabled:opacity-50"
+                        >
+                          {deletingThread ? '削除中...' : '削除'}
+                        </button>
+                      </div>
+                    )}
+                  </div>
 
-              <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-                {author && (
-                  <>
-                    <span>{author.display_name}</span>
+                  <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
+                    {author && (
+                      <>
+                        <span>{author.display_name}</span>
+                        <span>•</span>
+                      </>
+                    )}
+                    <span>{formatDate(thread.created_at)}</span>
+                    {thread.updated_at && thread.updated_at.getTime() !== thread.created_at.getTime() && (
+                      <>
+                        <span>•</span>
+                        <span>編集済み</span>
+                      </>
+                    )}
                     <span>•</span>
-                  </>
-                )}
-                <span>{formatDate(thread.created_at)}</span>
-                <span>•</span>
-                <span>{thread.posts_count} コメント</span>
-                <span>•</span>
-                <span>{thread.likes_count} いいね</span>
-              </div>
+                    <span>{thread.posts_count} コメント</span>
+                    <span>•</span>
+                    <span>{thread.likes_count} いいね</span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -452,9 +564,57 @@ export default function ThreadDetailView({
                         )}
                       </div>
 
-                      <div className="mb-3 whitespace-pre-wrap text-gray-900 dark:text-gray-100">
-                        {post.content}
-                      </div>
+                      {editingPostId === post.id ? (
+                        <div className="mb-3 space-y-3">
+                          <textarea
+                            value={editingPostContent}
+                            onChange={(e) => setEditingPostContent(e.target.value)}
+                            className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-500 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100"
+                            rows={6}
+                          />
+                          <div className="flex gap-2">
+                            <button
+                              onClick={async () => {
+                                try {
+                                  await updatePost(post.id, {
+                                    content: editingPostContent.trim(),
+                                    edited_at: new Date(),
+                                  });
+                                  
+                                  setPosts((prevPosts) =>
+                                    prevPosts.map((p) =>
+                                      p.id === post.id
+                                        ? { ...p, content: editingPostContent.trim(), edited_at: new Date() }
+                                        : p
+                                    )
+                                  );
+                                  setEditingPostId(null);
+                                  setEditingPostContent('');
+                                } catch (error) {
+                                  console.error('投稿の更新に失敗しました:', error);
+                                  alert('投稿の更新に失敗しました');
+                                }
+                              }}
+                              className="rounded-lg bg-orange-600 px-4 py-2 text-sm font-medium text-white hover:bg-orange-700"
+                            >
+                              保存
+                            </button>
+                            <button
+                              onClick={() => {
+                                setEditingPostId(null);
+                                setEditingPostContent('');
+                              }}
+                              className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300"
+                            >
+                              キャンセル
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="mb-3 whitespace-pre-wrap text-gray-900 dark:text-gray-100">
+                          {post.content}
+                        </div>
+                      )}
 
                       <div className="flex items-center gap-4 text-sm">
                         <button
@@ -481,6 +641,48 @@ export default function ThreadDetailView({
                           </svg>
                           {post.likes_count}
                         </button>
+                        {user && user.uid === post.author_id && editingPostId !== post.id && (
+                          <>
+                            <button
+                              onClick={() => {
+                                setEditingPostId(post.id);
+                                setEditingPostContent(post.content);
+                              }}
+                              className="text-gray-600 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
+                            >
+                              編集
+                            </button>
+                            <button
+                              onClick={async () => {
+                                if (!confirm('この投稿を削除しますか？')) {
+                                  return;
+                                }
+                                setDeletingPostId(post.id);
+                                try {
+                                  await deletePost(post.id);
+                                  setPosts((prevPosts) =>
+                                    prevPosts.map((p) =>
+                                      p.id === post.id ? { ...p, deleted_flag: true } : p
+                                    )
+                                  );
+                                  setThread({
+                                    ...thread,
+                                    posts_count: Math.max(0, thread.posts_count - 1),
+                                  });
+                                } catch (error) {
+                                  console.error('投稿の削除に失敗しました:', error);
+                                  alert('投稿の削除に失敗しました');
+                                } finally {
+                                  setDeletingPostId(null);
+                                }
+                              }}
+                              disabled={deletingPostId === post.id}
+                              className="text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 disabled:opacity-50"
+                            >
+                              {deletingPostId === post.id ? '削除中...' : '削除'}
+                            </button>
+                          </>
+                        )}
                         <button
                           onClick={() => {
                             if (!user) {
