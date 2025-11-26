@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function RulesPage() {
   return (
     <div className="bg-gray-50 dark:bg-gray-900">
@@ -64,12 +66,68 @@ export default function RulesPage() {
                 <li>その他、当サイトが当サイトの提供が困難と判断した場合</li>
               </ul>
 
-              <h3 className="mt-6 mb-3 text-xl font-semibold">7. 保証の否認および免責</h3>
+              <h3 className="mt-6 mb-3 text-xl font-semibold">7. 収益化について</h3>
+              <p className="mb-4">
+                当サイトは、運営費用を賄うため、以下の方法で収益化を行っています：
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>広告配信：</strong>Google AdSense、その他の広告ネットワークを通じた広告表示</li>
+                <li><strong>アフィリエイトプログラム：</strong>商品やサービスへのリンクから発生する紹介料</li>
+                <li><strong>その他の収益化手段：</strong>将来的に追加される可能性のある収益化手段</li>
+              </ul>
+              <p className="mt-4 mb-4">
+                当サイトの収益化は、サービスの継続的な提供と改善のために必要です。ユーザーは、当サイト上に広告が表示されること、およびアフィリエイトリンクが含まれる可能性があることを理解し、同意するものとします。
+              </p>
+              <p className="mb-4">
+                広告配信やアフィリエイトプログラムに関する詳細は、<Link href="/privacy" className="text-orange-600 hover:text-orange-700 dark:text-orange-400">プライバシーポリシー</Link>をご確認ください。
+              </p>
+
+              <h3 className="mt-6 mb-3 text-xl font-semibold">8. 保証の否認および免責</h3>
               <p className="mb-4">
                 当サイトは、当サイトに事実上または法律上の瑕疵（安全性、信頼性、正確性、完全性、有効性、特定の目的への適合性、セキュリティなどに関する欠陥、エラーやバグ、権利侵害などを含みます。）がないことを明示的にも黙示的にも保証しておりません。
               </p>
+              <p className="mb-4">
+                当サイトは、当サイトの利用により生じた損害について、一切の責任を負いません。当サイトは、ユーザーが当サイト上で閲覧した広告、リンク、またはその他のコンテンツに基づいて行った取引や行動について、一切の責任を負いません。
+              </p>
+              <p className="mb-4">
+                当サイトは、当サイト上に表示される広告の内容、正確性、合法性、適切性について、一切の責任を負いません。広告主との取引は、ユーザーと広告主との間で直接行われるものであり、当サイトはその取引に関与しません。
+              </p>
 
-              <h3 className="mt-6 mb-3 text-xl font-semibold">8. 利用規約の変更</h3>
+              <h3 className="mt-6 mb-3 text-xl font-semibold">9. NBA関連コンテンツの使用について</h3>
+              <p className="mb-4">
+                当サイトは、非公式のファンコミュニティであり、NBA、各チーム、選手、その他の関係者とは一切関係がありません。
+              </p>
+              <p className="mb-4">
+                当サイトでは、以下の方法でNBA関連の情報を扱っています：
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>フェアユース：</strong>批評、コメント、ニュース報道、研究、教育目的での情報の使用</li>
+                <li><strong>公式ソースからの情報：</strong>公式発表、公式ウェブサイト、公式ソーシャルメディアからの情報の引用</li>
+                <li><strong>ユーザー生成コンテンツ：</strong>ユーザーが投稿する意見、コメント、分析</li>
+              </ul>
+              <p className="mt-4 mb-4">
+                <strong>商標・ロゴについて：</strong>
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>NBA、各チーム名、ロゴ、商標は、それぞれの所有者の財産です</li>
+                <li>当サイトは、これらの商標・ロゴを商業的に使用する権利を有していません</li>
+                <li>当サイトでの使用は、フェアユースの範囲内での使用であり、商標権の侵害を意図するものではありません</li>
+                <li>商標権者からの異議申し立てがあった場合、当サイトは適切に対応いたします</li>
+              </ul>
+
+              <h3 className="mt-6 mb-3 text-xl font-semibold">10. ユーザー生成コンテンツの取り扱い</h3>
+              <p className="mb-4">
+                ユーザーが投稿したコンテンツ（スレッド、コメント、画像など）について：
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li>ユーザーは、投稿したコンテンツについて、適法な権利を有していることを保証するものとします</li>
+                <li>ユーザーは、投稿したコンテンツが第三者の著作権、商標権、その他の知的財産権を侵害していないことを保証するものとします</li>
+                <li>ユーザーは、投稿したコンテンツについて、当サイトおよびその他のユーザーが当サイト内で利用することを許諾するものとします</li>
+                <li>当サイトは、ユーザーが投稿したコンテンツについて、事前の通知なく削除、編集、非表示化することができるものとします</li>
+                <li>当サイトは、ユーザーが投稿したコンテンツの内容について、一切の責任を負いません</li>
+              </ul>
+
+              <h3 className="mt-6 mb-3 text-xl font-semibold">11. 利用規約の変更</h3>
               <p className="mb-4">
                 当サイトは、必要と判断した場合には、ユーザーに通知することなくいつでも本規約を変更することができるものとします。なお、本規約の変更後、本サイトの利用を開始した場合には、当該ユーザーは変更後の規約に同意したものとみなします。
               </p>
@@ -119,12 +177,25 @@ export default function RulesPage() {
                 投稿時に、著作権違反していない旨の確認チェックを必須とします。違反投稿は削除対象となり、悪質な場合はアカウント凍結の対象となります。
               </p>
 
-              <h3 className="mt-6 mb-3 text-xl font-semibold">4. DMCA対応</h3>
+              <h3 className="mt-6 mb-3 text-xl font-semibold">4. NBA関連コンテンツの使用</h3>
+              <p className="mb-4">
+                当サイトは、非公式のファンコミュニティとして、以下の原則に基づいてNBA関連の情報を扱っています：
+              </p>
+              <ul className="list-disc pl-6 space-y-2">
+                <li><strong>フェアユース：</strong>批評、コメント、ニュース報道、研究、教育目的での情報の使用</li>
+                <li><strong>公式ソースの引用：</strong>公式発表、公式ウェブサイト、公式ソーシャルメディアからの情報の引用</li>
+                <li><strong>商標・ロゴの使用：</strong>フェアユースの範囲内での使用（商業的使用は行いません）</li>
+              </ul>
+              <p className="mt-4 mb-4">
+                <strong>免責：</strong>当サイトは、NBA、各チーム、選手、その他の関係者とは一切関係がありません。当サイトの内容は、ファンの意見や分析であり、公式の見解ではありません。
+              </p>
+
+              <h3 className="mt-6 mb-3 text-xl font-semibold">5. DMCA対応</h3>
               <p className="mb-4">
                 著作権侵害の申し立てがある場合、当サイトは適切に対応いたします。以下の連絡先までご連絡ください：
               </p>
               <p className="mb-4">
-                <strong>連絡先：</strong> contact@baskettalkjapan.com
+                <strong>連絡先：</strong> <a href="mailto:contact@baskettalkjapan.com" className="text-orange-600 hover:text-orange-700 dark:text-orange-400">contact@baskettalkjapan.com</a>
               </p>
               <p className="mb-4">
                 申し立ての際は、以下の情報を含めてください：
@@ -136,12 +207,15 @@ export default function RulesPage() {
                 <li>連絡先情報</li>
                 <li>申し立ての内容が真実であることの宣誓</li>
               </ul>
+              <p className="mt-4 mb-4">
+                当サイトは、適切な申し立てを受けた場合、速やかに該当コンテンツの削除または非表示化を行います。
+              </p>
             </div>
           </section>
 
           {/* 最終更新日 */}
           <div className="text-sm text-gray-600 dark:text-gray-400">
-            最終更新日: 2025-11-23
+            最終更新日: 2025-11-26
           </div>
         </div>
       </div>

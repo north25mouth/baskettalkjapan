@@ -37,6 +37,14 @@ export default function Footer() {
               </li>
               <li>
                 <Link
+                  href="/privacy"
+                  className="text-sm text-gray-600 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
+                >
+                  プライバシーポリシー
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/community"
                   className="text-sm text-gray-600 hover:text-orange-600 dark:text-gray-400 dark:hover:text-orange-400"
                 >
@@ -90,7 +98,10 @@ export default function Footer() {
             © {new Date().getFullYear()} BasketTalk Japan. All rights reserved.
           </p>
           <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-500">
-            このサイトは非公式のファンコミュニティです。NBAとは一切関係ありません。
+            このサイトは非公式のファンコミュニティです。NBA、各チーム、選手とは一切関係がありません。
+          </p>
+          <p className="mt-2 text-center text-xs text-gray-500 dark:text-gray-500">
+            NBA、各チーム名、ロゴ、商標は、それぞれの所有者の財産です。当サイトでの使用は、フェアユースの範囲内での使用です。
           </p>
         </div>
       </div>
