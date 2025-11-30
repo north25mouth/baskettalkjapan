@@ -79,6 +79,24 @@ npm run dev
 
 Windows環境でのセットアップが初めての方は、[開発環境セットアップガイド](./rule/01-development-environment.md) を参照してください。
 
+**Cursorを使った環境構築**: [Windows環境構築プロンプト（Cursor用）](./docs/WINDOWS_SETUP_PROMPT.md) または [詳細版](./docs/WINDOWS_SETUP_PROMPT_DETAILED.md) を参照してください。
+
+### WordPressローカル環境のセットアップ
+
+ローカル環境でWordPressとSWELLテーマをセットアップする場合：
+
+```bash
+# セットアップスクリプトを実行（初回のみ）
+npm run setup:wordpress
+
+# WordPress REST API接続をチェック
+npm run check:wordpress
+```
+
+**Mac向けの詳細な手順**: [Mac向けセットアップガイド](./scripts/setup-wordpress-mac.md)
+
+詳細な手順は [WordPress統合ガイド](./rule/05-wordpress-integration-guide.md) を参照してください。
+
 詳細は [クイックスタートガイド](./docs/QUICK_START.md) を参照してください。
 
 ## ドキュメント
@@ -89,6 +107,7 @@ Windows環境でのセットアップが初めての方は、[開発環境セッ
 - [Gitブランチルール](./rule/02-git-branch-rules.md) - ブランチの命名規則と運用
 - [コーディング規約](./rule/03-coding-standards.md) - コードの書き方
 - [コミットメッセージルール](./rule/04-commit-message-rules.md) - コミットメッセージの書き方
+- [WordPress統合ガイド](./rule/05-wordpress-integration-guide.md) - WordPressとSWELLテーマのセットアップ
 
 ### その他のドキュメント
 

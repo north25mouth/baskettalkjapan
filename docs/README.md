@@ -23,6 +23,8 @@ docs/
 │
 ├── DEV_SECURITY_RULES.md        # 開発用セキュリティルール
 ├── MANUAL_SEED_TEAMS.md         # チームデータの手動シード方法
+├── WINDOWS_SETUP_PROMPT.md      # Windows環境構築プロンプト（Cursor用）
+├── WINDOWS_SETUP_PROMPT_DETAILED.md  # Windows環境構築プロンプト（詳細版）
 │
 ├── requirements/                # 要件定義書
 │   ├── README.md
@@ -47,6 +49,8 @@ docs/
 - [セットアップチェックリスト](./SETUP_CHECKLIST.md) - セットアップ手順の確認
 - [Firestore Database セットアップ](./FIRESTORE_SETUP.md) - Firestoreの初期設定
 - [課金・予算管理ガイド](./BILLING.md) - Firebase課金の設定と予算管理
+- [Windows環境構築プロンプト（Cursor用）](./WINDOWS_SETUP_PROMPT.md) - Windows環境でのCursorを使った環境構築
+- [Windows環境構築プロンプト（詳細版）](./WINDOWS_SETUP_PROMPT_DETAILED.md) - より詳細な手順を含むWindows環境構築プロンプト
 
 ### 開発関連
 - [要件定義書](./requirements/README.md) - 各ページの要件定義
